@@ -17,6 +17,27 @@ class BowlingGameTest {
         game = new BowlingGame();
     }
 
+    // Helper methods para pruebas
+    private void rollMany(int times, int pins) {
+        for (int i = 0; i < times; i++) {
+            game.roll(pins);
+        }
+    }
+
+    private void rollPerfectGame() {
+        for (int i = 0; i < 12; i++) {
+            game.roll(10);
+        }
+    }
+
+    private void rollAllSpares(int lastBonus) {
+        for (int i = 0; i < 10; i++) {
+            game.roll(5);
+            game.roll(5);
+        }
+        game.roll(lastBonus);
+    }
+
     @Nested
     @DisplayName("Modulo A: Validaciones y Registro de Tiros (roll)")
     class ModuleATests {
@@ -66,11 +87,7 @@ class BowlingGameTest {
         @Test
         @DisplayName("A5: roll() cuando el juego ya esta completo lanza IllegalStateException")
         void a5_rollWhenGameIsComplete_throwsIllegalStateException() {
-            // Simulamos un juego completo de 20 tiros normales (2 tiros de 0 por cada uno de los 10 frames)
-            for (int i = 0; i < 20; i++) {
-                game.roll(0);
-            }
-            // Tiro adicional número 21 cuando el juego ya terminó
+            rollMany(20, 0);
             IllegalStateException ex = assertThrows(
                     IllegalStateException.class,
                     () -> game.roll(0)
@@ -87,7 +104,6 @@ class BowlingGameTest {
             Frame firstFrame = game.getFrames().get(0);
             assertEquals(FrameType.STRIKE, firstFrame.getType());
 
-            // El siguiente tiro debe iniciar el segundo frame
             game.roll(4);
             assertEquals(2, game.getFrames().size());
         }
@@ -106,20 +122,71 @@ class BowlingGameTest {
         @Test
         @DisplayName("A8: Frame 10 con strike acepta hasta 3 tiros sin excepcion")
         void a8_tenthFrameWithStrike_acceptsThreeRolls() {
-            // 9 frames normales con 0 pinos (18 tiros)
-            for (int i = 0; i < 18; i++) {
-                game.roll(0);
-            }
-            // Frame 10: Strike + 2 tiros bonus
+            rollMany(18, 0);
             assertDoesNotThrow(() -> {
-                game.roll(10); // tiro 19 (strike en frame 10)
-                game.roll(10); // tiro 20 (bonus 1)
-                game.roll(10); // tiro 21 (bonus 2)
+                game.roll(10);
+                game.roll(10);
+                game.roll(10);
             });
 
             assertEquals(10, game.getFrames().size());
             Frame tenthFrame = game.getFrames().get(9);
             assertEquals(3, tenthFrame.getRolls().size());
+        }
+    }
+
+    @Nested
+    @DisplayName("Modulo C: Estado de Finalizacion del Juego (isComplete)")
+    class ModuleCTests {
+
+        @Test
+        @DisplayName("C1: isComplete() al inicio del juego retorna false")
+        void c1_isComplete_atGameStart_returnsFalse() {
+            assertFalse(game.isComplete());
+        }
+
+        @Test
+        @DisplayName("C2: isComplete() despues de 9 frames completos retorna false")
+        void c2_isComplete_afterNineFrames_returnsFalse() {
+            rollMany(18, 0);
+            assertFalse(game.isComplete());
+        }
+
+        @Test
+        @DisplayName("C3: 10 frames normales completos (sin strike/spare en frame 10) retorna true")
+        void c3_isComplete_tenNormalFrames_returnsTrue() {
+            rollMany(20, 0);
+            assertTrue(game.isComplete());
+        }
+
+        @Test
+        @DisplayName("C4: Spare en frame 10 + tiro bonus ejecutado retorna true")
+        void c4_isComplete_tenthFrameSpareWithBonus_returnsTrue() {
+            rollMany(18, 0);
+            game.roll(5);
+            game.roll(5);
+            assertFalse(game.isComplete(), "No debe completarse antes del tiro de bonificacion");
+            game.roll(7);
+            assertTrue(game.isComplete(), "Debe completarse tras el tiro bonus");
+        }
+
+        @Test
+        @DisplayName("C5: Strike en frame 10 + 2 tiros bonus ejecutados retorna true")
+        void c5_isComplete_tenthFrameStrikeWithTwoBonuses_returnsTrue() {
+            rollMany(18, 0);
+            game.roll(10);
+            assertFalse(game.isComplete(), "No debe completarse solo con el strike en frame 10");
+            game.roll(10);
+            assertFalse(game.isComplete(), "No debe completarse con 1 tiro bonus");
+            game.roll(10);
+            assertTrue(game.isComplete(), "Debe completarse con los 2 tiros bonus");
+        }
+
+        @Test
+        @DisplayName("C6: Juego perfecto tras el 12º strike retorna true")
+        void c6_isComplete_perfectGame_returnsTrue() {
+            rollPerfectGame();
+            assertTrue(game.isComplete());
         }
     }
 }
