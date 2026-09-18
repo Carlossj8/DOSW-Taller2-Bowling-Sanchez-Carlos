@@ -17,7 +17,6 @@ class BowlingGameTest {
         game = new BowlingGame();
     }
 
-    // Helper methods para pruebas
     private void rollMany(int times, int pins) {
         for (int i = 0; i < times; i++) {
             game.roll(pins);
@@ -28,14 +27,6 @@ class BowlingGameTest {
         for (int i = 0; i < 12; i++) {
             game.roll(10);
         }
-    }
-
-    private void rollAllSpares(int lastBonus) {
-        for (int i = 0; i < 10; i++) {
-            game.roll(5);
-            game.roll(5);
-        }
-        game.roll(lastBonus);
     }
 
     @Nested
