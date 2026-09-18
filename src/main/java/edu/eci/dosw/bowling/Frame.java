@@ -8,6 +8,10 @@ import java.util.List;
  */
 public class Frame {
 
+    public static final int MAX_PINS = 10;
+    public static final int STANDARD_FRAME_ROLLS = 2;
+    public static final int TENTH_FRAME_BONUS_ROLLS = 3;
+
     private final List<Integer> rolls;
     private FrameType type;
     private final boolean isTenthFrame;
@@ -27,58 +31,63 @@ public class Frame {
             throw new IllegalStateException("El frame ya esta completo");
         }
 
-        if (!isTenthFrame) {
-            if (rolls.isEmpty()) {
-                rolls.add(pins);
-                if (pins == 10) {
-                    this.type = FrameType.STRIKE;
-                }
-            } else {
-                if (rolls.get(0) + pins > 10) {
-                    throw new IllegalArgumentException("Dos tiros en un frame normal no pueden sumar mas de 10 pinos");
-                }
-                rolls.add(pins);
-                if (rolls.get(0) + pins == 10) {
-                    this.type = FrameType.SPARE;
-                } else {
-                    this.type = FrameType.NORMAL;
-                }
+        if (isTenthFrame) {
+            addTenthFrameRoll(pins);
+        } else {
+            addStandardRoll(pins);
+        }
+    }
+
+    private void addStandardRoll(int pins) {
+        if (rolls.isEmpty()) {
+            rolls.add(pins);
+            if (pins == MAX_PINS) {
+                this.type = FrameType.STRIKE;
             }
         } else {
-            if (rolls.isEmpty()) {
-                rolls.add(pins);
-            } else if (rolls.size() == 1) {
-                if (rolls.get(0) < 10 && rolls.get(0) + pins > 10) {
-                    throw new IllegalArgumentException("La suma de los dos primeros tiros en el frame 10 no puede superar 10 sin strike");
-                }
-                rolls.add(pins);
-            } else if (rolls.size() == 2) {
-                if (rolls.get(0) == 10 && rolls.get(1) < 10 && rolls.get(1) + pins > 10) {
-                    throw new IllegalArgumentException("Los tiros bonus no pueden derribar mas de 10 pinos en un set");
-                }
-                rolls.add(pins);
+            if (rolls.get(0) + pins > MAX_PINS) {
+                throw new IllegalArgumentException("Dos tiros en un frame normal no pueden sumar mas de 10 pinos");
+            }
+            rolls.add(pins);
+            if (rolls.get(0) + pins == MAX_PINS) {
+                this.type = FrameType.SPARE;
+            } else {
+                this.type = FrameType.NORMAL;
             }
         }
     }
 
+    private void addTenthFrameRoll(int pins) {
+        if (rolls.size() == 1 && rolls.get(0) < MAX_PINS && rolls.get(0) + pins > MAX_PINS) {
+            throw new IllegalArgumentException("La suma de los dos primeros tiros en el frame 10 no puede superar 10 sin strike");
+        }
+        if (rolls.size() == 2 && rolls.get(0) == MAX_PINS && rolls.get(1) < MAX_PINS && rolls.get(1) + pins > MAX_PINS) {
+            throw new IllegalArgumentException("Los tiros bonus no pueden derribar mas de 10 pinos en un set");
+        }
+        rolls.add(pins);
+    }
+
     public boolean isComplete() {
         if (isTenthFrame) {
-            if (rolls.size() < 2) {
+            if (rolls.size() < STANDARD_FRAME_ROLLS) {
                 return false;
             }
-            if (rolls.get(0) == 10 || rolls.get(0) + rolls.get(1) == 10) {
-                return rolls.size() == 3;
-            }
-            return rolls.size() == 2;
-        } else {
-            if (rolls.isEmpty()) {
-                return false;
-            }
-            if (rolls.get(0) == 10) {
-                return true;
-            }
-            return rolls.size() == 2;
+            return hasTenthFrameBonus() ? rolls.size() == TENTH_FRAME_BONUS_ROLLS : rolls.size() == STANDARD_FRAME_ROLLS;
         }
+
+        return isStrike() || rolls.size() == STANDARD_FRAME_ROLLS;
+    }
+
+    public boolean isStrike() {
+        return !rolls.isEmpty() && rolls.get(0) == MAX_PINS;
+    }
+
+    public boolean isSpare() {
+        return rolls.size() >= STANDARD_FRAME_ROLLS && !isStrike() && (rolls.get(0) + rolls.get(1) == MAX_PINS);
+    }
+
+    private boolean hasTenthFrameBonus() {
+        return rolls.get(0) == MAX_PINS || (rolls.get(0) + rolls.get(1) == MAX_PINS);
     }
 
     public List<Integer> getRolls() {
