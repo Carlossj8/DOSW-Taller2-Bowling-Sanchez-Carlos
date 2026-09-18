@@ -9,6 +9,7 @@ import java.util.List;
  */
 public class BowlingGame {
 
+    private static final int MAX_FRAMES = 10;
     private final List<Frame> frames;
     private int currentFrame;
 
@@ -22,23 +23,45 @@ public class BowlingGame {
      * Lanza IllegalStateException si el juego ya termino.
      */
     public void roll(int pins) {
-        // TODO: implementar con TDD (RED -> GREEN -> REFACTOR)
+        if (pins < 0 || pins > 10) {
+            throw new IllegalArgumentException("Los pinos deben estar entre 0 y 10: " + pins);
+        }
+        if (isComplete()) {
+            throw new IllegalStateException("El juego ya esta completo, no se pueden registrar mas tiros");
+        }
+
+        Frame current = getCurrentOrCreateFrame();
+        current.addRoll(pins);
+        if (current.isComplete()) {
+            currentFrame++;
+        }
+    }
+
+    private Frame getCurrentOrCreateFrame() {
+        if (frames.isEmpty() || frames.get(frames.size() - 1).isComplete()) {
+            boolean isTenth = (frames.size() == MAX_FRAMES - 1);
+            Frame newFrame = new Frame(isTenth);
+            frames.add(newFrame);
+            return newFrame;
+        }
+        return frames.get(frames.size() - 1);
     }
 
     /**
      * Puntaje total. Lanza IllegalStateException si el juego no esta completo.
      */
     public int score() {
-        // TODO: implementar con TDD
-        return 0;
+        if (!isComplete()) {
+            throw new IllegalStateException("El juego no esta completo");
+        }
+        return new BowlingScorer().calculate(frames);
     }
 
     /**
      * true cuando los 10 frames han sido completados.
      */
     public boolean isComplete() {
-        // TODO: implementar con TDD
-        return false;
+        return frames.size() == MAX_FRAMES && frames.get(MAX_FRAMES - 1).isComplete();
     }
 
     public List<Frame> getFrames() {
