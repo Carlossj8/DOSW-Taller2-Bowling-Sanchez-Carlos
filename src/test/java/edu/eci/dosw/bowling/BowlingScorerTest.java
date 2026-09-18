@@ -126,4 +126,19 @@ class BowlingScorerTest {
         );
         assertNotNull(ex.getMessage());
     }
+
+    @Test
+    @DisplayName("Calcular puntaje con lista de frames nula o vacia retorna 0")
+    void calculate_nullOrEmptyFrames_returnsZero() {
+        assertEquals(0, scorer.calculate(null));
+        assertEquals(0, scorer.calculate(java.util.List.of()));
+    }
+
+    @Test
+    @DisplayName("Calcular puntaje con juego incompleto de 1 solo frame strike")
+    void calculate_singleStrikeFrame_returnsStrikeValueWithoutBonuses() {
+        Frame strikeFrame = new Frame(false);
+        strikeFrame.addRoll(10);
+        assertEquals(10, scorer.calculate(java.util.List.of(strikeFrame)));
+    }
 }

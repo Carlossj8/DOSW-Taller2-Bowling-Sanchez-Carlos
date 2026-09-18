@@ -188,5 +188,13 @@ class BowlingGameTest {
             rollPerfectGame();
             assertTrue(game.isComplete());
         }
+
+        @Test
+        @DisplayName("Verificar avance del contador de frames actuales")
+        void getCurrentFrame_tracksCurrentFrameProgression() {
+            assertEquals(0, game.getCurrentFrame());
+            game.roll(10); // Strike completa frame 1
+            assertEquals(1, game.getCurrentFrame());
+        }
     }
 }
